@@ -1,12 +1,12 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <wiringPi.h>
-#include <wiringSerial.h>
+#include "wiringPi/wiringPi.h"
+#include "wiringPi/wiringSerial.h"
 
 int main() {
   int serial_port;
-  char dat;
+  char data;
   if ((serial_port = serialOpen("/dev/ttyS0", 9600)) < 0) {
     fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
     return 1;
