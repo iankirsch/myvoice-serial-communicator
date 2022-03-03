@@ -28,7 +28,7 @@ int main() {
   // Print success message
   printf("Successfully connected to serial device on '/dev/ttyS0'.\nAwaiting data...\n");
 
-  while (1) {
+  while (true) {
     if (serialDataAvail(serial_port)) {
       data = serialGetchar(serial_port); /* receive character serially */
       printf("%c", data);
