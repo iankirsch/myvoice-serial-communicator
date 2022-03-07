@@ -5,8 +5,8 @@
 
 #include <chrono>
 #include <iostream>
-#include <string>
 
+#include "lib/logger.hpp"
 #include "wiringPi/wiringPi.h"
 #include "wiringPi/wiringSerial.h"
 
@@ -16,8 +16,9 @@ const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
 int serial_port;
 
-void clear();
 bool attemptHandshake();
+
+Logger logger;
 
 int main() {
   char data;
@@ -32,14 +33,9 @@ int main() {
     return 1;
   }
 
-  // Clear console
-  clear();
-  printf("  _____           _       _    _____                                      _           _\n");
-  printf(" / ____|         (_)     | |  / ____|                                    (_)         | |\n");
-  printf("| (___   ___ _ __ _  __ _| | | |     ___  _ __ ___  _ __ ___  _   _ _ __  _  ___ __ _| |_ ___  _ __\n");
-  printf(" \\___ \\ / _ | '__| |/ _` | | | |    / _ \\| '_ ` _ \\| '_ ` _ \\| | | | '_ \\| |/ __/ _` | __/ _ \\| '__|\n");
-  printf(" ____) |  __| |  | | (_| | | | |___| (_) | | | | | | | | | | | |_| | | | | | (_| (_| | || (_) | |\n");
-  printf("|_____/ \\___|_|  |_|\\__,_|_|  \\_____\\___/|_| |_| |_|_| |_| |_|\\__,_|_| |_|_|\\___\\__,_|\\__\\___/|_|\n\n");
+  // Clear console and show welcome screen
+  logger.clear();
+  logger.welcome();
 
   // Attempt handshake with Arduino
   if (!attemptHandshake()) {
@@ -48,8 +44,8 @@ int main() {
   }
 
   // Print success message
-  printf("\n\nSuccessfully connected to serial device on '/dev/ttyS0'.\n");
-  printf("Awaiting data...\n");
+  logger.log("\n\nSuccessfully connected to serial device on '/dev/ttyS0'.");
+  logger.log("Awaiting data...");
 
   while (true) {
     if (serialDataAvail(serial_port)) {
@@ -70,7 +66,7 @@ bool attemptHandshake() {
 
   string data;
 
-  printf("Connecting... Please wait.\n");
+  logger.log("Connecting... Please wait.");
   Time t0 = high_resolution_clock::now();
 
   bool handshakeReceived = false;
@@ -87,7 +83,7 @@ bool attemptHandshake() {
       if (characterInt == 13) {
         if (data == HANDSHAKE_RESPONSE) {
           handshakeReceived = true;
-          printf("Handshake took %s ms to complete.\n", to_string(elapsedTime).data());
+          logger.log("Handshake took " + to_string(elapsedTime) + " ms to complete.");
           break;
         } else {
           data = "";
@@ -112,14 +108,4 @@ bool attemptHandshake() {
   }
 
   return true;
-}
-
-void clear() {
-#if defined _WIN32
-  system("cls");
-#elif defined(__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
-  system("clear");
-#elif defined(__APPLE__)
-  system("clear");
-#endif
 }

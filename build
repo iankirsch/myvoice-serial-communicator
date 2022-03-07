@@ -1,2 +1,2 @@
 #!/bin/bash
-g++ main.cpp -o main -l wiringPi
+g++ *.cpp ./lib/*.cpp -o main -l wiringPi
