@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 
 #include "lib/logger.hpp"
@@ -14,6 +15,9 @@ using namespace std;
 
 const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
+
+const char* OUTPUT_FILENAME = "output.txt";
+
 int serial_port;
 
 bool attemptHandshake();
@@ -47,13 +51,20 @@ int main() {
   logger.log("\n\nSuccessfully connected to serial device on '/dev/ttyS0'.");
   logger.log("Awaiting data...");
 
+  // Create and open a text file
+  ofstream outputFile;
+  outputFile.open(OUTPUT_FILENAME, std::ios_base::app);
+
   while (true) {
     if (serialDataAvail(serial_port)) {
-      data = serialGetchar(serial_port); /* receive character serially */
+      // Receive data serially
+      data = serialGetchar(serial_port);
       printf("%c", data);
+
+      // Write received data to file;
+      outputFile << data;
+
       fflush(stdout);
-      // serialPutchar(serial_port, data); /* transmit character serially on
-      // port */
     }
   }
 }
