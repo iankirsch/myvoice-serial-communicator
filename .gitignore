@@ -1,3 +1,5 @@
 *.DSYM/
 .DS_STORE
 .out
+
+main
