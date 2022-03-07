@@ -41,7 +41,6 @@ int main() {
   printf(" ____) |  __| |  | | (_| | | | |___| (_) | | | | | | | | | | | |_| | | | | | (_| (_| | || (_) | |\n");
   printf("|_____/ \\___|_|  |_|\\__,_|_|  \\_____\\___/|_| |_| |_|_| |_| |_|\\__,_|_| |_|_|\\___\\__,_|\\__\\___/|_|\n\n");
 
-
   // Attempt handshake with Arduino
   if (!attemptHandshake()) {
     fprintf(stderr, "\nERROR: Connection to client device could not be established after 10s.\n");
@@ -73,9 +72,10 @@ bool attemptHandshake() {
 
   printf("Connecting... Please wait.\n");
   Time t0 = high_resolution_clock::now();
-  serialPuts(serial_port, HANDSHAKE_SEQUENCE);
 
   bool handshakeReceived = false;
+  bool sent = false;
+
   while (!handshakeReceived) {
     Time tNow = high_resolution_clock::now();
     int elapsedTime = duration_cast<milliseconds>(tNow - t0).count();
@@ -96,6 +96,16 @@ bool attemptHandshake() {
         data += character;
       }
     }
+
+    if (elapsedTime % 2000 == 0) {
+      if (sent == false) {
+        sent = true;
+        serialPuts(serial_port, HANDSHAKE_SEQUENCE);
+      }
+    } else {
+      sent = false;
+    }
+
     if (elapsedTime > 10000) {
       return false;
     }
