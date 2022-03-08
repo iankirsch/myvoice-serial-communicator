@@ -17,11 +17,15 @@ const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
 const char* INTERRUPT_REQUEST = "--PLÖM--";
 
-const char* OUTPUT_FILENAME = "output.txt";
+// const string OUTPUT_FILENAME = "output.txt";
+const string DATA_DIRECTORY = "output_data/";
 
 int serial_port;
 
 bool attemptHandshake();
+string getFilepath(int fileNumber);
+string getLineFromSerialPort(int serial_port);
+void saveDataToFile(string filepath, string data);
 
 Logger logger;
 
@@ -71,36 +75,64 @@ int main(int argc, char* argv[]) {
   logger.log("Awaiting data...");
 
   // Create and open a text file
-  ofstream outputFile;
-  outputFile.open(OUTPUT_FILENAME, std::ios_base::app);
 
   string currentLine = "";
 
+  int fileNumber = 0;
   bool active = true;
+  string collectedData = "";
+
   while (active) {
+    string filename = getFilepath(fileNumber);
+
     if (serialDataAvail(serial_port)) {
       // Receive data serially
-      char currentChar = serialGetchar(serial_port);
-      int charInt = currentChar;
+      string currentLine = getLineFromSerialPort(serial_port);
 
-      if (charInt == 10) {
-        // Write received data to file;
-        if (currentLine == INTERRUPT_REQUEST) {
-          logger.log("Stopping");
-          active = false;
-        }
-        logger.log(currentLine);
-        outputFile << currentLine + "\n";
-        currentLine = "";
+      if (currentLine == INTERRUPT_REQUEST) {
+        logger.log("Saving sequence ...");
+
+        string filepath = getFilepath(fileNumber++);
+        saveDataToFile(filepath, collectedData);
+        collectedData = "";
+
+        logger.log("Saving complete!");
       } else {
-        currentLine += currentChar;
+        collectedData += currentLine + '\n';
       }
-
       fflush(stdout);
     }
   }
+}
 
-  outputFile.close();
+string getFilepath(int fileNumber) {
+  string filename = DATA_DIRECTORY;
+
+  filename += to_string(fileNumber);
+  filename += ".txt";
+
+  return filename;
+}
+
+void saveDataToFile(string filepath, string data) {
+  ofstream file;
+  file.open(filepath, std::ios_base::app);
+
+  file << data;
+
+  file.close();
+}
+
+string getLineFromSerialPort(int serial_port) {
+  string line;
+  char currentChar = serialGetchar(serial_port);
+
+  while ((int)currentChar != 10) {
+    line += currentChar;
+    currentChar = serialGetchar(serial_port);
+  }
+
+  return line;
 }
 
 bool attemptHandshake() {
