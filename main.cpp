@@ -15,6 +15,7 @@ using namespace std;
 
 const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
+const char* INTERRUPT_REQUEST = "--PLÖM--";
 
 const char* OUTPUT_FILENAME = "output.txt";
 
@@ -24,10 +25,26 @@ bool attemptHandshake();
 
 Logger logger;
 
-int main() {
-  char data;
+int main(int argc, char* argv[]) {
+  string device = "/dev/ttyS0";
+  // int rate = 115200;
+  int rate = 1000000;
+  bool noLogo = false;
 
-  if ((serial_port = serialOpen("/dev/ttyS0", 9600)) < 0) {
+  for (int i = 0; i < argc; ++i) {
+    logger.log(argv[i]);
+    if (argv[i] == "--device") {
+      device = argv[i + 1];
+    }
+    if (argv[i] == "--rate") {
+      rate = atoi(argv[i + 1]);
+    }
+    if (argv[i] == "--noLogo") {
+      noLogo = true;
+    }
+  }
+
+  if ((serial_port = serialOpen(device.data(), rate)) < 0) {
     fprintf(stderr, "\nERROR: Unable to open serial device: %s\n", strerror(errno));
     return 1;
   }
@@ -38,8 +55,10 @@ int main() {
   }
 
   // Clear console and show welcome screen
-  logger.clear();
-  logger.welcome();
+  if (!noLogo) {
+    logger.clear();
+    logger.welcome();
+  }
 
   // Attempt handshake with Arduino
   if (!attemptHandshake()) {
@@ -55,18 +74,33 @@ int main() {
   ofstream outputFile;
   outputFile.open(OUTPUT_FILENAME, std::ios_base::app);
 
-  while (true) {
+  string currentLine = "";
+
+  bool active = true;
+  while (active) {
     if (serialDataAvail(serial_port)) {
       // Receive data serially
-      data = serialGetchar(serial_port);
-      printf("%c", data);
+      char currentChar = serialGetchar(serial_port);
+      int charInt = currentChar;
 
-      // Write received data to file;
-      outputFile << data;
+      if (charInt == 10) {
+        // Write received data to file;
+        if (currentLine == INTERRUPT_REQUEST) {
+          logger.log("Stopping");
+          active = false;
+        }
+        logger.log(currentLine);
+        outputFile << currentLine + "\n";
+        currentLine = "";
+      } else {
+        currentLine += currentChar;
+      }
 
       fflush(stdout);
     }
   }
+
+  outputFile.close();
 }
 
 bool attemptHandshake() {
@@ -91,7 +125,7 @@ bool attemptHandshake() {
       char character = serialGetchar(serial_port);
       int characterInt = character;
 
-      if (characterInt == 13) {
+      if (characterInt == 10) {
         if (data == HANDSHAKE_RESPONSE) {
           handshakeReceived = true;
           logger.log("Handshake took " + to_string(elapsedTime) + " ms to complete.");
