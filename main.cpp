@@ -30,10 +30,10 @@ Logger logger;
 
 int main(int argc, char* argv[]) {
   string device = "/dev/ttyS0";
-  // int rate = 115200;
-  int rate = 1000000;
+  int rate = 1000000;  // 115200;
   bool noLogo = false;
 
+  // Apply properties from flags
   for (int i = 0; i < argc; ++i) {
     string arg = argv[i];
     if (arg == "--device") {
@@ -61,18 +61,21 @@ int main(int argc, char* argv[]) {
     logger.welcome();
   }
 
+  // Connect to serial device
   if ((serial_port = serialOpen(device.data(), rate)) < 0) {
     string error = strerror(errno);
     logger.error("Unable to open serial device: " + error);
     return 1;
   }
 
+  // Start wiringPi library
   if (wiringPiSetup() == -1) {
     string error = strerror(errno);
     logger.error("Unable to start wiringPi: " + error);
     return 1;
   }
 
+  // Show configuration
   if (!noLogo) {
     logger.log(logger.bold("    Configured device: ") + logger.cyan(device));
     logger.log(logger.bold("    Configured rate: ") + logger.cyan(to_string(rate)));
@@ -81,15 +84,15 @@ int main(int argc, char* argv[]) {
 
   // Attempt handshake with Arduino
   if (!attemptHandshake()) {
-    fprintf(stderr, "\nERROR: Connection to client device could not be established after 10s.\n");
+    logger.error("Connection to client device could not be established after 10s.");
     return 1;
   }
 
   // Print success message
-  logger.log("\n\nSuccessfully connected to serial device on '/dev/ttyS0'.");
+  logger.log("\n\nSuccessfully connected to serial device on '" + device + "'.");
   logger.log("Awaiting data...");
 
-  // Keep track of curent line
+  // Keep track of current line
   string currentLine = "";
 
   int fileNumber = 0;

@@ -5,25 +5,91 @@ using namespace std;
 
 class Logger {
  private:
+  /**
+   * @brief Prefix to use when displaying error messages
+   */
   string ERROR_PREFIX;
 
  public:
+  /**
+   * @brief Construct a new Logger instance
+   */
   Logger();
 
-  void log(string output);
-  void error(string output);
+  /**
+   * @brief Log a string to stdout
+   * @param input String to log
+   */
+  void log(string input);
 
-  string bold(string output);
-  string black(string output);
-  string red(string output);
-  string green(string output);
-  string yellow(string output);
-  string blue(string output);
-  string magenta(string output);
-  string cyan(string output);
-  string white(string output);
+  /**
+   * @brief Log a string to stderror
+   * Additionally, an error-indicating prefix is added.
+   * @param input Error messag to log
+   */
+  void error(string input);
 
+  /**
+   * @brief Add escape sequences to a string to make it appear bold in a terminal.
+   * @return Bold text
+   */
+  string bold(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear black in a terminal.
+   * @return Black text
+   */
+  string black(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear red in a terminal.
+   * @return Red text
+   */
+  string red(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear green in a terminal.
+   * @return Green text
+   */
+  string green(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear yellow in a terminal.
+   * @return Yellow text
+   */
+  string yellow(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear blue in a terminal.
+   * @return Blue text
+   */
+  string blue(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear magenta in a terminal.
+   * @return Magenta text
+   */
+  string magenta(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear cyan in a terminal.
+   * @return Cyan text
+   */
+  string cyan(string input);
+
+  /**
+   * @brief Add escape sequences to a string to make it appear white in a terminal.
+   * @return White text
+   */
+  string white(string input);
+
+  /**
+   * @brief Prints a welcome message
+   */
   void welcome();
 
+  /**
+   * @brief Clears the terminal screen
+   */
   void clear();
 };

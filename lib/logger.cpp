@@ -5,50 +5,50 @@ Logger::Logger() {
   return;
 }
 
-void Logger::log(string output) {
-  string finalOutput = output + "\n";
-  printf(finalOutput.data());
+void Logger::log(string input) {
+  string finalinput = input + "\n";
+  printf(finalinput.data());
 }
 
-void Logger::error(string output) {
-  string finalOutput = this->ERROR_PREFIX + output + "\n";
-  fprintf(stderr, finalOutput.data());
+void Logger::error(string input) {
+  string finalinput = this->ERROR_PREFIX + input + "\n";
+  fprintf(stderr, finalinput.data());
 }
 
-string Logger::bold(string output) {
-  return "\e[1m" + output + "\e[0m";
+string Logger::bold(string input) {
+  return "\e[1m" + input + "\e[0m";
 }
 
-string Logger::black(string output) {
-  return "\e[30m" + output + "\e[0m";
+string Logger::black(string input) {
+  return "\e[30m" + input + "\e[0m";
 }
 
-string Logger::red(string output) {
-  return "\e[31m" + output + "\e[0m";
+string Logger::red(string input) {
+  return "\e[31m" + input + "\e[0m";
 }
 
-string Logger::green(string output) {
-  return "\e[32m" + output + "\e[0m";
+string Logger::green(string input) {
+  return "\e[32m" + input + "\e[0m";
 }
 
-string Logger::yellow(string output) {
-  return "\e[33m" + output + "\e[0m";
+string Logger::yellow(string input) {
+  return "\e[33m" + input + "\e[0m";
 }
 
-string Logger::blue(string output) {
-  return "\e[34m" + output + "\e[0m";
+string Logger::blue(string input) {
+  return "\e[34m" + input + "\e[0m";
 }
 
-string Logger::magenta(string output) {
-  return "\e[35m" + output + "\e[0m";
+string Logger::magenta(string input) {
+  return "\e[35m" + input + "\e[0m";
 }
 
-string Logger::cyan(string output) {
-  return "\e[36m" + output + "\e[0m";
+string Logger::cyan(string input) {
+  return "\e[36m" + input + "\e[0m";
 }
 
-string Logger::white(string output) {
-  return "\e[37m" + output + "\e[0m";
+string Logger::white(string input) {
+  return "\e[37m" + input + "\e[0m";
 }
 
 
