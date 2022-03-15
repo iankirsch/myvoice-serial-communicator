@@ -17,7 +17,6 @@ const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
 const char* INTERRUPT_REQUEST = "--PLÖM--";
 
-// const string OUTPUT_FILENAME = "output.txt";
 const string DATA_DIRECTORY = "output_data/";
 
 int serial_port;
@@ -36,32 +35,48 @@ int main(int argc, char* argv[]) {
   bool noLogo = false;
 
   for (int i = 0; i < argc; ++i) {
-    logger.log(argv[i]);
-    if (argv[i] == "--device") {
+    string arg = argv[i];
+    if (arg == "--device") {
+      if (argv[i + 1] == nullptr) {
+        logger.error("No argument for flag " + logger.bold("--device") + " provided.");
+        return 1;
+      }
       device = argv[i + 1];
     }
-    if (argv[i] == "--rate") {
+    if (arg == "--rate") {
+      if (argv[i + 1] == nullptr) {
+        logger.error("No argument for flag " + logger.bold("--rate") + " provided.");
+        return 1;
+      }
       rate = atoi(argv[i + 1]);
     }
-    if (argv[i] == "--noLogo") {
+    if (arg == "--noLogo") {
       noLogo = true;
     }
-  }
-
-  if ((serial_port = serialOpen(device.data(), rate)) < 0) {
-    fprintf(stderr, "\nERROR: Unable to open serial device: %s\n", strerror(errno));
-    return 1;
-  }
-
-  if (wiringPiSetup() == -1) {
-    fprintf(stdout, "\nERROR: Unable to start wiringPi: %s\n", strerror(errno));
-    return 1;
   }
 
   // Clear console and show welcome screen
   if (!noLogo) {
     logger.clear();
     logger.welcome();
+  }
+
+  if ((serial_port = serialOpen(device.data(), rate)) < 0) {
+    string error = strerror(errno);
+    logger.error("Unable to open serial device: " + error);
+    return 1;
+  }
+
+  if (wiringPiSetup() == -1) {
+    string error = strerror(errno);
+    logger.error("Unable to start wiringPi: " + error);
+    return 1;
+  }
+
+  if (!noLogo) {
+    logger.log(logger.bold("    Configured device: ") + logger.cyan(device));
+    logger.log(logger.bold("    Configured rate: ") + logger.cyan(to_string(rate)));
+    logger.log("");
   }
 
   // Attempt handshake with Arduino
@@ -74,8 +89,7 @@ int main(int argc, char* argv[]) {
   logger.log("\n\nSuccessfully connected to serial device on '/dev/ttyS0'.");
   logger.log("Awaiting data...");
 
-  // Create and open a text file
-
+  // Keep track of curent line
   string currentLine = "";
 
   int fileNumber = 0;
@@ -88,6 +102,7 @@ int main(int argc, char* argv[]) {
     if (serialDataAvail(serial_port)) {
       // Receive data serially
       string currentLine = getLineFromSerialPort(serial_port);
+      logger.log(currentLine);
 
       if (currentLine == INTERRUPT_REQUEST) {
         logger.log("Saving sequence ...");
