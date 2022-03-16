@@ -1,11 +1,8 @@
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "lib/common.hpp"
