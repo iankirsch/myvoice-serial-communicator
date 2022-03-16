@@ -6,12 +6,19 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
+#include "lib/common.hpp"
 #include "lib/logger.hpp"
 #include "wiringPi/wiringPi.h"
 #include "wiringPi/wiringSerial.h"
 
 using namespace std;
+
+typedef chrono::high_resolution_clock::time_point Time;
+using chrono::duration_cast;
+using chrono::high_resolution_clock;
+using chrono::milliseconds;
 
 const char* HANDSHAKE_SEQUENCE = "--PING--\n";
 const string HANDSHAKE_RESPONSE = "--PONG--";
@@ -22,6 +29,7 @@ const string DATA_DIRECTORY = "output_data/";
 int serial_port;
 
 bool attemptHandshake();
+
 string getFilepath(int fileNumber);
 string getLineFromSerialPort(int serial_port);
 void saveDataToFile(string filepath, string data);
@@ -31,6 +39,8 @@ Logger logger;
 int main(int argc, char* argv[]) {
   string device = "/dev/ttyS0";
   int rate = 1000000;  // 115200;
+  int granularity = 100;
+  int recordingTime = 2000;
   bool noLogo = false;
 
   // Apply properties from flags
@@ -50,8 +60,25 @@ int main(int argc, char* argv[]) {
       }
       rate = atoi(argv[i + 1]);
     }
+    if (arg == "--granularity") {
+      if (argv[i + 1] == nullptr) {
+        logger.error("No argument for flag " + logger.bold("--granularity") + " provided.");
+        return 1;
+      }
+      granularity = atoi(argv[i + 1]);
+    }
+    if (arg == "--recordingTime") {
+      if (argv[i + 1] == nullptr) {
+        logger.error("No argument for flag " + logger.bold("--recordingTime") + " provided.");
+        return 1;
+      }
+      recordingTime = atoi(argv[i + 1]);
+    }
     if (arg == "--noLogo") {
       noLogo = true;
+    }
+    if (arg == "--verbose" || arg == "-v") {
+      logger.verbose = true;
     }
   }
 
@@ -79,6 +106,9 @@ int main(int argc, char* argv[]) {
   if (!noLogo) {
     logger.log(logger.bold("    Configured device: ") + logger.cyan(device));
     logger.log(logger.bold("    Configured rate: ") + logger.cyan(to_string(rate)));
+    logger.log(logger.bold("    Configured granularity: ") + logger.cyan(to_string(granularity) + "ms"));
+    logger.log(logger.bold("    Configured recording time: ") + logger.cyan(to_string(recordingTime) + "ms"));
+    logger.debug(logger.yellow("\n    Verbose mode enabled. "));
     logger.log("");
   }
 
@@ -90,14 +120,19 @@ int main(int argc, char* argv[]) {
 
   // Print success message
   logger.log("\n\nSuccessfully connected to serial device on '" + device + "'.");
-  logger.log("Awaiting data...");
+  logger.debug("Awaiting data...");
 
-  // Keep track of current line
+  // Keep track of current state
+  bool active = true;
+  int fileNumber = 0;
+
   string currentLine = "";
 
-  int fileNumber = 0;
-  bool active = true;
-  string collectedData = "";
+  int receivedValuesCount = 0;
+  vector<int> tempReceivedValues = {0, 0, 0, 0, 0, 0, 0};
+  vector<vector<int>> collectedValues;
+
+  Time t0 = high_resolution_clock::now();
 
   while (active) {
     string filename = getFilepath(fileNumber);
@@ -105,18 +140,53 @@ int main(int argc, char* argv[]) {
     if (serialDataAvail(serial_port)) {
       // Receive data serially
       string currentLine = getLineFromSerialPort(serial_port);
-      logger.log(currentLine);
+
+      logger.debug(currentLine);
+
+      if (currentLine[0] == '[' && currentLine[currentLine.length() - 1] == ']') {
+        // Received line starts with "[" and ends with "]", indicating that this is important data
+        Time tNow = high_resolution_clock::now();
+        int elapsedTime = duration_cast<milliseconds>(tNow - t0).count();
+
+        // Split data to vector
+        vector<string> receivedStringValues = split(currentLine.substr(1, currentLine.length() - 2), ",");
+        vector<int> receivedValues = stringVectorToIntVector(receivedStringValues);
+
+        for (int i = 0; i < receivedValues.size(); i++) {
+          tempReceivedValues[i] += receivedValues[i];
+        }
+
+        receivedValuesCount++;
+
+        // Average received data every "granularity" ms
+        if (elapsedTime >= granularity) {
+          logger.debug("Averaging");
+          for (int i = 0; i < tempReceivedValues.size(); i++) {
+            tempReceivedValues[i] = tempReceivedValues[i] / receivedValuesCount;
+          }
+
+          collectedValues.push_back(tempReceivedValues);
+
+          t0 = high_resolution_clock::now();
+          tempReceivedValues = {0, 0, 0, 0, 0, 0, 0};
+          receivedValuesCount = 0;
+        }
+      }
 
       if (currentLine == INTERRUPT_REQUEST) {
-        logger.log("Saving sequence ...");
+        // Received line is interrupt request, save sequence and clear recorded numbers.
+        logger.debug("Saving sequence ...");
+
+        vector<vector<int>>::const_iterator first = collectedValues.end() - (recordingTime / granularity);
+        vector<vector<int>>::const_iterator last = collectedValues.end();
+
+        vector<vector<int>> recordedValues(first, last);
 
         string filepath = getFilepath(fileNumber++);
-        saveDataToFile(filepath, collectedData);
-        collectedData = "";
+        saveDataToFile(filepath, formatCollectedValues(recordedValues));
+        collectedValues.clear();
 
         logger.log("Saving complete!");
-      } else {
-        collectedData += currentLine + '\n';
       }
       fflush(stdout);
     }
@@ -154,11 +224,6 @@ string getLineFromSerialPort(int serial_port) {
 }
 
 bool attemptHandshake() {
-  typedef chrono::high_resolution_clock::time_point Time;
-  using chrono::duration_cast;
-  using chrono::high_resolution_clock;
-  using chrono::milliseconds;
-
   string data;
 
   logger.log("Connecting... Please wait.");
@@ -188,7 +253,7 @@ bool attemptHandshake() {
       }
     }
 
-    if (elapsedTime % 2000 == 0) {
+    if (elapsedTime % 500 == 0) {
       if (sent == false) {
         sent = true;
         serialPuts(serial_port, HANDSHAKE_SEQUENCE);

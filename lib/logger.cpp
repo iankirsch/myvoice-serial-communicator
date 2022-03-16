@@ -2,12 +2,19 @@
 
 Logger::Logger() {
   this->ERROR_PREFIX = this->bold(this->red("ERROR: "));
+  this->verbose = false;
   return;
 }
 
 void Logger::log(string input) {
   string finalinput = input + "\n";
   printf(finalinput.data());
+}
+
+void Logger::debug(string input) {
+  if (this->verbose) {
+    this->log(input);
+  }
 }
 
 void Logger::error(string input) {
@@ -50,7 +57,6 @@ string Logger::cyan(string input) {
 string Logger::white(string input) {
   return "\e[37m" + input + "\e[0m";
 }
-
 
 void Logger::welcome() {
   this->log(this->bold("  _____           _       _    _____                                      _           _"));

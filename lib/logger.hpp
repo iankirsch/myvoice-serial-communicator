@@ -17,10 +17,21 @@ class Logger {
   Logger();
 
   /**
+   * @brief Set to true to show debug messages
+   */
+  bool verbose;
+
+  /**
    * @brief Log a string to stdout
    * @param input String to log
    */
   void log(string input);
+
+  /**
+   * @brief Log a string to stdout, only if verbose-mode is enabled
+   * @param input String to log
+   */
+  void debug(string input);
 
   /**
    * @brief Log a string to stderror
