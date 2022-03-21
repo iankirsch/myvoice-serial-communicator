@@ -9,6 +9,10 @@ class Logger {
    * @brief Prefix to use when displaying error messages
    */
   string ERROR_PREFIX;
+  /**
+   * @brief Prefix to use when displaying success messages
+   */
+  string SUCCESS_PREFIX;
 
  public:
   /**
@@ -34,9 +38,16 @@ class Logger {
   void debug(string input);
 
   /**
+   * @brief Log a string to stdout
+   * Additionally, a success-indicating prefix is added.
+   * @param input Success message to log
+   */
+  void success(string input);
+
+  /**
    * @brief Log a string to stderror
    * Additionally, an error-indicating prefix is added.
-   * @param input Error messag to log
+   * @param input Error message to log
    */
   void error(string input);
 

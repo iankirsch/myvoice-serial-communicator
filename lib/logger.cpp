@@ -2,6 +2,7 @@
 
 Logger::Logger() {
   this->ERROR_PREFIX = this->bold(this->red("ERROR: "));
+  this->SUCCESS_PREFIX = this->bold(this->green("SUCCESS: "));
   this->verbose = false;
   return;
 }
@@ -15,6 +16,11 @@ void Logger::debug(string input) {
   if (this->verbose) {
     this->log(input);
   }
+}
+
+void Logger::success(string input) {
+  string finalinput = this->SUCCESS_PREFIX + input + "\n";
+  this->log(finalinput);
 }
 
 void Logger::error(string input) {
