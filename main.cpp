@@ -114,6 +114,7 @@ int main(int argc, char* argv[]) {
     logger.log(logger.bold("    Configured rate: ") + logger.cyan(to_string(rate)));
     logger.log(logger.bold("    Configured granularity: ") + logger.cyan(to_string(granularity) + "ms"));
     logger.log(logger.bold("    Configured recording time: ") + logger.cyan(to_string(recordingTime) + "ms"));
+    logger.log(logger.bold("    Configured recording name: ") + logger.cyan(FILENAME_PREFIX));
     logger.debug(logger.yellow("\n    Verbose mode enabled. "));
     logger.log("");
   }
