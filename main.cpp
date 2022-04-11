@@ -137,14 +137,12 @@ int main(int argc, char* argv[]) {
   string currentLine = "";
 
   int receivedValuesCount = 0;
-  vector<int> tempReceivedValues = {0, 0, 0, 0, 0, 0, 0};
+  vector<int> tempReceivedValues = {0, 0, 0, 0, 0, 0};
   vector<vector<int>> collectedValues;
 
   Time t0 = high_resolution_clock::now();
 
   while (active) {
-    string filename = getFilepath(fileNumber);
-
     if (serialDataAvail(serial_port)) {
       // Receive data serially
       string currentLine = getLineFromSerialPort(serial_port);
@@ -176,7 +174,7 @@ int main(int argc, char* argv[]) {
           collectedValues.push_back(tempReceivedValues);
 
           t0 = high_resolution_clock::now();
-          tempReceivedValues = {0, 0, 0, 0, 0, 0, 0};
+          tempReceivedValues = {0, 0, 0, 0, 0, 0};
           receivedValuesCount = 0;
         }
       }
